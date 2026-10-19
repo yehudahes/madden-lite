@@ -4,77 +4,661 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Madden Lite</title>
-    <link rel="stylesheet" href="styles.css" />
+    <style>
+      :root {
+        --bg1: #081b14;
+        --bg2: #0d2d22;
+        --panel: rgba(6, 22, 17, 0.86);
+        --panel-border: rgba(169, 255, 208, 0.18);
+        --field: #11914b;
+        --field2: #0d7a43;
+        --text: #edfdf5;
+        --muted: #ccebd9;
+        --accent: #9af6c4;
+        --home: #55d892;
+        --away: #f5c06b;
+        --danger: #ff7f7f;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: linear-gradient(180deg, var(--bg1), var(--bg2));
+        color: var(--text);
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+      }
+
+      #game {
+        width: min(1100px, 96vw);
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.24);
+        overflow: hidden;
+      }
+
+      .hud {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 18px;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--panel-border);
+      }
+
+      .scorebox {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        padding: 12px 16px;
+        border-radius: 12px;
+        min-width: 170px;
+      }
+
+      .scorebox.home { border-color: rgba(85, 216, 146, 0.35); }
+      .scorebox.away { border-color: rgba(245, 192, 107, 0.35); }
+
+      .scorebox .tag {
+        letter-spacing: 0.08em;
+        font-size: 0.72rem;
+        font-weight: 700;
+        opacity: 0.9;
+      }
+
+      .scorebox .num {
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .center {
+        text-align: center;
+      }
+
+      .center .status {
+        color: var(--accent);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+      }
+
+      .center .meta {
+        margin-top: 4px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .bench {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px 0;
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      button:hover {
+        filter: brightness(1.06);
+      }
+
+      .primary {
+        background: linear-gradient(180deg, #2bb87e, #1c8d62);
+        border-color: rgba(255,255,255,0.18);
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 12px 16px;
+      }
+
+      .field-wrap {
+        padding: 0 16px 16px;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 14px;
+        background: linear-gradient(180deg, var(--field), var(--field2));
+        border: 2px solid rgba(255,255,255,0.12);
+      }
+
+      .legend {
+        padding: 0 16px 16px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 700px) {
+        .hud {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="menuScreen" class="screen active">
-      <div class="menu-shell">
-        <div class="title-block">
-          <p class="eyebrow">ARCADE FOOTBALL</p>
-          <h1>Madden Lite</h1>
+    <div id="game">
+      <div class="hud">
+        <div class="scorebox home">
+          <span class="tag">HOME</span>
+          <span class="num" id="homeScore">0</span>
         </div>
 
-        <div class="team-selectors">
-          <div class="team-panel">
-            <h2>Home Team</h2>
-            <div id="homeTeamList" class="team-list"></div>
-          </div>
-
-          <div class="team-panel">
-            <h2>Away Team</h2>
-            <div id="awayTeamList" class="team-list"></div>
-          </div>
+        <div class="center">
+          <div class="status" id="statusText">READY</div>
+          <div class="meta" id="metaText">1st & 10 | Ball on own 25</div>
         </div>
 
-        <div class="menu-actions">
-          <button id="startGameBtn" class="main-btn">Start Game</button>
+        <div class="scorebox away">
+          <span class="tag">AWAY</span>
+          <span class="num" id="awayScore">0</span>
         </div>
+      </div>
+
+      <div class="bench">
+        <button class="primary" id="startBtn">Start Drive</button>
+        <button id="runBtn">Run Play</button>
+        <button id="passBtn">Pass Play</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+
+      <div class="toolbar">
+        <button id="leftBtn">Left</button>
+        <button id="rightBtn">Right</button>
+        <button id="speedBtn">Sprint</button>
+        <button id="tackleBtn">Tackle</button>
+      </div>
+
+      <div class="field-wrap">
+        <canvas id="canvas" width="960" height="520"></canvas>
+      </div>
+
+      <div class="legend">
+        Move with WASD or Arrow Keys. Use Run, Pass, Sprint, and Tackle buttons or keyboard shortcuts: R, P, Space, T.
       </div>
     </div>
 
-    <div id="gameScreen" class="screen">
-      <div class="hud-top">
-        <div class="score-box home-box">
-          <span class="team-tag">HOME</span>
-          <span id="homeScore">0</span>
-        </div>
+    <script>
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
 
-        <div class="center-info">
-          <div id="statusText">Ready</div>
-          <div id="downText">1st & 10</div>
-          <div id="fieldText">Ball on own 25</div>
-        </div>
+      const homeScoreEl = document.getElementById('homeScore');
+      const awayScoreEl = document.getElementById('awayScore');
+      const statusTextEl = document.getElementById('statusText');
+      const metaTextEl = document.getElementById('metaText');
 
-        <div class="score-box away-box">
-          <span class="team-tag">AWAY</span>
-          <span id="awayScore">0</span>
-        </div>
-      </div>
+      const keys = {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false,
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+        space: false,
+      };
 
-      <div class="game-layout">
-        <aside class="left-panel panel">
-          <h3>Team Stats</h3>
-          <div id="teamStats"></div>
+      const game = {
+        playing: false,
+        homeScore: 0,
+        awayScore: 0,
+        possession: 'home',
+        down: 1,
+        yardsToGo: 10,
+        lineOfScrimmage: 25,
+        status: 'READY',
+        playInProgress: false,
+        ball: { x: 120, y: 260, r: 7, active: false, vx: 0, vy: 0 },
+        carrier: { x: 120, y: 260, r: 18, color: '#aef5d0' },
+        defenders: [
+          { x: 430, y: 150, r: 14, color: '#ffc78e' },
+          { x: 440, y: 220, r: 14, color: '#ffc78e' },
+          { x: 430, y: 290, r: 14, color: '#ffc78e' },
+          { x: 440, y: 370, r: 14, color: '#ffc78e' },
+        ],
+        receivers: [
+          { x: 300, y: 140, r: 13, color: '#dfefff' },
+          { x: 330, y: 260, r: 13, color: '#dfefff' },
+          { x: 300, y: 380, r: 13, color: '#dfefff' },
+        ],
+      };
 
-          <h3>Playbook</h3>
-          <div id="playbookButtons" class="playbook-list"></div>
-        </aside>
+      function resetField() {
+        if (game.possession === 'home') {
+          game.carrier.x = 140;
+          game.carrier.y = 260;
+        } else {
+          game.carrier.x = 820;
+          game.carrier.y = 260;
+        }
 
-        <div class="field-wrap panel">
-          <canvas id="gameCanvas" width="960" height="520"></canvas>
-        </div>
+        game.ball.x = game.carrier.x;
+        game.ball.y = game.carrier.y;
+        game.ball.active = false;
 
-        <aside class="right-panel panel">
-          <h3>Drive Log</h3>
-          <ul id="driveLog"></ul>
-          <div class="actions">
-            <button id="menuBtn">Menu</button>
-            <button id="newDriveBtn">New Drive</button>
-          </div>
-        </aside>
-      </div>
-    </div>
+        game.defenders = [
+          { x: game.possession === 'home' ? 430 : 530, y: 150, r: 14, color: '#ffc78e' },
+          { x: game.possession === 'home' ? 440 : 520, y: 220, r: 14, color: '#ffc78e' },
+          { x: game.possession === 'home' ? 430 : 530, y: 290, r: 14, color: '#ffc78e' },
+          { x: game.possession === 'home' ? 440 : 520, y: 370, r: 14, color: '#ffc78e' },
+        ];
 
-    <script src="game.js"></script>
+        game.receivers = [
+          { x: game.possession === 'home' ? 300 : 660, y: 140, r: 13, color: '#dfefff' },
+          { x: game.possession === 'home' ? 330 : 630, y: 260, r: 13, color: '#dfefff' },
+          { x: game.possession === 'home' ? 300 : 660, y: 380, r: 13, color: '#dfefff' },
+        ];
+      }
+
+      function updateHud() {
+        homeScoreEl.textContent = game.homeScore;
+        awayScoreEl.textContent = game.awayScore;
+        statusTextEl.textContent = game.status;
+
+        const downLabel = game.down === 1 ? '1st' : game.down === 2 ? '2nd' : game.down === 3 ? '3rd' : '4th';
+        const fieldSide = game.possession === 'home' ? 'own' : 'opp';
+        metaTextEl.textContent = `${downLabel} & ${game.yardsToGo} | Ball on ${fieldSide} ${game.lineOfScrimmage}`;
+      }
+
+      function startDrive() {
+        game.playing = true;
+        game.playInProgress = false;
+        game.status = 'DRIVE LIVE';
+        resetField();
+        updateHud();
+      }
+
+      function endOfDown() {
+        if (game.down > 4) {
+          switchPossession();
+          return;
+        }
+
+        if (game.yardsToGo <= 0) {
+          game.down = 1;
+          game.yardsToGo = 10;
+        }
+
+        game.playInProgress = false;
+        updateHud();
+      }
+
+      function switchPossession() {
+        game.possession = game.possession === 'home' ? 'away' : 'home';
+        game.down = 1;
+        game.yardsToGo = 10;
+        game.lineOfScrimmage = 25;
+        game.status = game.possession === 'home' ? 'HOME BALL' : 'AWAY BALL';
+        resetField();
+        updateHud();
+      }
+
+      function scoreTouchdown() {
+        if (game.possession === 'home') {
+          game.homeScore += 7;
+          game.status = 'TOUCHDOWN!';
+        } else {
+          game.awayScore += 7;
+          game.status = 'TOUCHDOWN!';
+        }
+
+        game.possession = game.possession === 'home' ? 'away' : 'home';
+        game.down = 1;
+        game.yardsToGo = 10;
+        game.lineOfScrimmage = 25;
+        game.playInProgress = false;
+        resetField();
+        updateHud();
+      }
+
+      function runPlay() {
+        if (!game.playing || game.playInProgress) return;
+        game.playInProgress = true;
+        game.status = 'RUN PLAY';
+        updateHud();
+
+        const direction = game.possession === 'home' ? 1 : -1;
+        const targetX = game.carrier.x + (190 * direction) + (Math.random() * 60 - 30);
+        const targetY = game.carrier.y + (Math.random() * 110 - 55);
+        const startX = game.carrier.x;
+        const startY = game.carrier.y;
+
+        const interval = setInterval(() => {
+          if (!game.playing) {
+            clearInterval(interval);
+            return;
+          }
+
+          game.carrier.x += (targetX - game.carrier.x) * 0.18;
+          game.carrier.y += (targetY - game.carrier.y) * 0.18;
+
+          for (const d of game.defenders) {
+            const dx = game.carrier.x - d.x;
+            const dy = game.carrier.y - d.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            d.x += (dx / dist) * 1.0;
+            d.y += (dy / dist) * 1.0;
+
+            if (Math.hypot(game.carrier.x - d.x, game.carrier.y - d.y) < 20) {
+              clearInterval(interval);
+              const gained = Math.max(1, Math.round(Math.abs(game.carrier.x - startX) / 8));
+              const signedGain = gained * direction;
+              game.lineOfScrimmage += signedGain;
+              game.down += 1;
+              game.yardsToGo = Math.max(1, game.yardsToGo - gained);
+
+              if (game.lineOfScrimmage >= 100 || game.lineOfScrimmage <= 0) {
+                scoreTouchdown();
+                return;
+              }
+
+              if (game.yardsToGo <= 0) {
+                game.down = 1;
+                game.yardsToGo = 10;
+                game.status = 'FIRST DOWN';
+              } else {
+                game.status = `RUN FOR ${gained}`;
+              }
+
+              if (game.down > 4) {
+                switchPossession();
+                return;
+              }
+
+              resetField();
+              updateHud();
+              return;
+            }
+          }
+
+          if (Math.abs(game.carrier.x - targetX) < 8 && Math.abs(game.carrier.y - targetY) < 8) {
+            clearInterval(interval);
+            const gained = Math.max(2, Math.round(Math.abs(targetX - startX) / 10));
+            const signedGain = gained * direction;
+            game.lineOfScrimmage += signedGain;
+            game.down += 1;
+            game.yardsToGo = Math.max(1, game.yardsToGo - gained);
+
+            if (game.lineOfScrimmage >= 100 || game.lineOfScrimmage <= 0) {
+              scoreTouchdown();
+              return;
+            }
+
+            if (game.yardsToGo <= 0) {
+              game.down = 1;
+              game.yardsToGo = 10;
+              game.status = 'FIRST DOWN';
+            } else {
+              game.status = `RUN FOR ${gained}`;
+            }
+
+            if (game.down > 4) {
+              switchPossession();
+              return;
+            }
+
+            resetField();
+            updateHud();
+          }
+        }, 26);
+      }
+
+      function passPlay() {
+        if (!game.playing || game.playInProgress) return;
+        game.playInProgress = true;
+        game.status = 'PASS PLAY';
+        updateHud();
+
+        const receiver = game.receivers[Math.floor(Math.random() * game.receivers.length)];
+        const targetX = receiver.x;
+        const targetY = receiver.y;
+        game.ball.active = true;
+        game.ball.x = game.carrier.x;
+        game.ball.y = game.carrier.y;
+        game.ball.vx = (targetX - game.carrier.x) / 22;
+        game.ball.vy = (targetY - game.carrier.y) / 22;
+
+        const interval = setInterval(() => {
+          if (!game.playing) {
+            clearInterval(interval);
+            return;
+          }
+
+          game.ball.x += game.ball.vx;
+          game.ball.y += game.ball.vy;
+
+          const nearReceiver = Math.hypot(game.ball.x - targetX, game.ball.y - targetY) < 18;
+          const hitDefender = game.defenders.some((d) => Math.hypot(game.ball.x - d.x, game.ball.y - d.y) < 16);
+
+          if (nearReceiver && !hitDefender) {
+            clearInterval(interval);
+            const gain = 8 + Math.floor(Math.random() * 18);
+            const direction = game.possession === 'home' ? 1 : -1;
+            game.lineOfScrimmage += gain * direction;
+            game.yardsToGo = Math.max(1, game.yardsToGo - gain);
+            game.down += 1;
+            game.ball.active = false;
+
+            if (game.lineOfScrimmage >= 100 || game.lineOfScrimmage <= 0) {
+              scoreTouchdown();
+              return;
+            }
+
+            if (game.yardsToGo <= 0) {
+              game.down = 1;
+              game.yardsToGo = 10;
+              game.status = 'FIRST DOWN';
+            } else {
+              game.status = `COMPLETE ${gain}`;
+            }
+
+            if (game.down > 4) {
+              switchPossession();
+              return;
+            }
+
+            resetField();
+            updateHud();
+            return;
+          }
+
+          if (hitDefender) {
+            clearInterval(interval);
+            game.ball.active = false;
+            game.status = 'INTERCEPTION';
+            switchPossession();
+            return;
+          }
+
+          if (game.ball.x < 0 || game.ball.x > canvas.width || game.ball.y < 0 || game.ball.y > canvas.height) {
+            clearInterval(interval);
+            game.ball.active = false;
+            game.status = 'INCOMPLETE';
+            game.down += 1;
+            if (game.down > 4) {
+              switchPossession();
+              return;
+            }
+            resetField();
+            updateHud();
+          }
+        }, 20);
+      }
+
+      function tackle() {
+        if (!game.playing) return;
+        game.status = 'PLAY ENDED';
+        game.down += 1;
+        if (game.down > 4) {
+          switchPossession();
+          return;
+        }
+        resetField();
+        updateHud();
+      }
+
+      function movePlayer() {
+        const moveX = (keys.ArrowRight || keys.d ? 1 : 0) - (keys.ArrowLeft || keys.a ? 1 : 0);
+        const moveY = (keys.ArrowDown || keys.s ? 1 : 0) - (keys.ArrowUp || keys.w ? 1 : 0);
+        const speed = keys.space ? 3.2 : 2.2;
+
+        if (game.playing && !game.playInProgress) {
+          game.carrier.x += moveX * speed;
+          game.carrier.y += moveY * speed;
+          game.carrier.x = Math.max(70, Math.min(890, game.carrier.x));
+          game.carrier.y = Math.max(80, Math.min(440, game.carrier.y));
+        }
+      }
+
+      function drawField() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#0d7a43';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(0, 40, 100, 440);
+        ctx.fillRect(canvas.width - 100, 40, 100, 440);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+        ctx.lineWidth = 2;
+        for (let x = 0; x <= canvas.width; x += 80) {
+          ctx.beginPath();
+          ctx.moveTo(x, 40);
+          ctx.lineTo(x, 480);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= canvas.height; y += 70) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Segoe UI';
+        ctx.fillText('HOME', 16, 24);
+        ctx.fillText('AWAY', canvas.width - 78, 24);
+
+        for (const d of game.defenders) {
+          ctx.fillStyle = d.color;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (const r of game.receivers) {
+          ctx.fillStyle = r.color;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = game.carrier.color;
+        ctx.beginPath();
+        ctx.arc(game.carrier.x, game.carrier.y, game.carrier.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (game.ball.active) {
+          ctx.fillStyle = '#f7f3cf';
+          ctx.beginPath();
+          ctx.arc(game.ball.x, game.ball.y, game.ball.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function loop() {
+        movePlayer();
+        drawField();
+        requestAnimationFrame(loop);
+      }
+
+      window.addEventListener('keydown', (event) => {
+        const key = event.key.toLowerCase();
+        if (key === 'arrowup') keys.ArrowUp = true;
+        if (key === 'arrowdown') keys.ArrowDown = true;
+        if (key === 'arrowleft') keys.ArrowLeft = true;
+        if (key === 'arrowright') keys.ArrowRight = true;
+        if (key === 'w') keys.w = true;
+        if (key === 'a') keys.a = true;
+        if (key === 's') keys.s = true;
+        if (key === 'd') keys.d = true;
+        if (event.code === 'Space') keys.space = true;
+
+        if (key === 'r') runPlay();
+        if (key === 'p') passPlay();
+        if (key === 't') tackle();
+      });
+
+      window.addEventListener('keyup', (event) => {
+        const key = event.key.toLowerCase();
+        if (key === 'arrowup') keys.ArrowUp = false;
+        if (key === 'arrowdown') keys.ArrowDown = false;
+        if (key === 'arrowleft') keys.ArrowLeft = false;
+        if (key === 'arrowright') keys.ArrowRight = false;
+        if (key === 'w') keys.w = false;
+        if (key === 'a') keys.a = false;
+        if (key === 's') keys.s = false;
+        if (key === 'd') keys.d = false;
+        if (event.code === 'Space') keys.space = false;
+      });
+
+      document.getElementById('startBtn').addEventListener('click', startDrive);
+      document.getElementById('runBtn').addEventListener('click', runPlay);
+      document.getElementById('passBtn').addEventListener('click', passPlay);
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        game.homeScore = 0;
+        game.awayScore = 0;
+        game.possession = 'home';
+        game.down = 1;
+        game.yardsToGo = 10;
+        game.lineOfScrimmage = 25;
+        game.status = 'READY';
+        game.playing = false;
+        resetField();
+        updateHud();
+      });
+      document.getElementById('leftBtn').addEventListener('click', () => { keys.a = true; setTimeout(() => keys.a = false, 100); });
+      document.getElementById('rightBtn').addEventListener('click', () => { keys.d = true; setTimeout(() => keys.d = false, 100); });
+      document.getElementById('speedBtn').addEventListener('click', () => { keys.space = true; setTimeout(() => keys.space = false, 200); });
+      document.getElementById('tackleBtn').addEventListener('click', tackle);
+
+      resetField();
+      updateHud();
+      requestAnimationFrame(loop);
+    </script>
   </body>
 </html>
