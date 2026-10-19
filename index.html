@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Madden Lite Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="team-pill home">
+          <span class="team-name">HOME</span>
+          <span id="homeScore">0</span>
+        </div>
+        <div class="center-block">
+          <div id="statusText">Press Start Drive</div>
+          <div id="downText">1st & 10</div>
+          <div id="fieldText">Ball on own 25</div>
+        </div>
+        <div class="team-pill away">
+          <span class="team-name">AWAY</span>
+          <span id="awayScore">0</span>
+        </div>
+      </header>
+
+      <div class="game-wrap">
+        <canvas id="gameCanvas" width="960" height="520"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn">Start Drive</button>
+        <button id="runBtn">Run Play</button>
+        <button id="passBtn">Pass Play</button>
+        <button id="resetBtn">Reset Game</button>
+      </div>
+
+      <div class="legend">
+        <p>Controls: WASD / Arrow Keys move the ball carrier. Space = sprint. R = run play. P = pass play. T = tackle/finish play.</p>
+      </div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
