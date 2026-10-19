@@ -3,40 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Madden Lite Prototype</title>
+    <title>Madden Lite</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="topbar">
-        <div class="team-pill home">
-          <span class="team-name">HOME</span>
+    <div id="menuScreen" class="screen active">
+      <div class="menu-shell">
+        <div class="title-block">
+          <p class="eyebrow">ARCADE FOOTBALL</p>
+          <h1>Madden Lite</h1>
+        </div>
+
+        <div class="team-selectors">
+          <div class="team-panel">
+            <h2>Home Team</h2>
+            <div id="homeTeamList" class="team-list"></div>
+          </div>
+
+          <div class="team-panel">
+            <h2>Away Team</h2>
+            <div id="awayTeamList" class="team-list"></div>
+          </div>
+        </div>
+
+        <div class="menu-actions">
+          <button id="startGameBtn" class="main-btn">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameScreen" class="screen">
+      <div class="hud-top">
+        <div class="score-box home-box">
+          <span class="team-tag">HOME</span>
           <span id="homeScore">0</span>
         </div>
-        <div class="center-block">
-          <div id="statusText">Press Start Drive</div>
+
+        <div class="center-info">
+          <div id="statusText">Ready</div>
           <div id="downText">1st & 10</div>
           <div id="fieldText">Ball on own 25</div>
         </div>
-        <div class="team-pill away">
-          <span class="team-name">AWAY</span>
+
+        <div class="score-box away-box">
+          <span class="team-tag">AWAY</span>
           <span id="awayScore">0</span>
         </div>
-      </header>
-
-      <div class="game-wrap">
-        <canvas id="gameCanvas" width="960" height="520"></canvas>
       </div>
 
-      <div class="controls">
-        <button id="startBtn">Start Drive</button>
-        <button id="runBtn">Run Play</button>
-        <button id="passBtn">Pass Play</button>
-        <button id="resetBtn">Reset Game</button>
-      </div>
+      <div class="game-layout">
+        <aside class="left-panel panel">
+          <h3>Team Stats</h3>
+          <div id="teamStats"></div>
 
-      <div class="legend">
-        <p>Controls: WASD / Arrow Keys move the ball carrier. Space = sprint. R = run play. P = pass play. T = tackle/finish play.</p>
+          <h3>Playbook</h3>
+          <div id="playbookButtons" class="playbook-list"></div>
+        </aside>
+
+        <div class="field-wrap panel">
+          <canvas id="gameCanvas" width="960" height="520"></canvas>
+        </div>
+
+        <aside class="right-panel panel">
+          <h3>Drive Log</h3>
+          <ul id="driveLog"></ul>
+          <div class="actions">
+            <button id="menuBtn">Menu</button>
+            <button id="newDriveBtn">New Drive</button>
+          </div>
+        </aside>
       </div>
     </div>
 
